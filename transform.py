@@ -54,8 +54,8 @@ def render2D(opt,XYZid,ML,renderTrans): # [B,1,VHW]
 		batchIdxCat,novelIdxCat,_ = np.meshgrid(range(opt.batchSize),range(opt.novelN),range(opt.outViewN*opt.outH*opt.outW),indexing="ij")
 		batchIdxCat,novelIdxCat = batchIdxCat.reshape([-1]),novelIdxCat.reshape([-1]) # [BNVHW]
 		# apply in-range masks
-		XnewCatInt = tf.compat.v1.to_int32(tf.round(XnewCat))
-		YnewCatInt = tf.compat.v1.to_int32(tf.round(YnewCat))
+		XnewCatInt = tf.cast(tf.round(XnewCat),tf.int32)
+		YnewCatInt = tf.cast(tf.round(YnewCat),tf.int32)
 		maskInside = (XnewCatInt>=0)&(XnewCatInt<opt.upscale*opt.W)&(YnewCatInt>=0)&(YnewCatInt<opt.upscale*opt.H)
 		valueInt = tf.stack([XnewCatInt,YnewCatInt,batchIdxCat,novelIdxCat],axis=1) # [BNVHW,d]
 		valueFloat = tf.stack([1/(ZnewCat+offsetDepth+1e-8),MLcat],axis=1) # [BNVHW,d]

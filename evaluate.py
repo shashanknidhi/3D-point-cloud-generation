@@ -37,7 +37,7 @@ with tf.device("/gpu:0"):
 			  graph.decoder_resnet if opt.arch=="resnet" else None
 	latent = encoder(opt,inputImage)
 	XYZ,maskLogit = decoder(opt,latent) # [B,H,W,3V],[B,H,W,V]
-	mask = tf.compat.v1.to_float(maskLogit>0)
+	mask = tf.cast(maskLogit>0,tf.float32)
 	# ------ build transformer ------
 	fuseTrans = tf.math.l2_normalize(opt.fuseTrans,dim=1)
 	XYZid,ML = transform.fuse3D(opt,XYZ,maskLogit,fuseTrans) # [B,1,VHW]

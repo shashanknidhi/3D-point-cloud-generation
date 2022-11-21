@@ -12,7 +12,7 @@ def projection(Vs,Vt):
 	Vs_rep = tf.tile(Vs[:,None,:],[1,VtN,1]) # [VsN,VtN,3]
 	diff = Vt_rep-Vs_rep
 	dist = tf.math.sqrt(tf.compat.v1.reduce_sum(diff**2,axis=[2])) # [VsN,VtN]
-	idx = tf.compat.v1.to_int32(tf.argmin(dist,axis=1))
+	idx = tf.cast(tf.argmin(dist,axis=1),tf.int32) # [VsN]
 	proj = tf.gather_nd(Vt_rep,tf.stack([tf.range(VsN),idx],axis=1))
 	minDist = tf.gather_nd(dist,tf.stack([tf.range(VsN),idx],axis=1))
 	return proj,minDist
@@ -35,7 +35,7 @@ def toMagenta(content): return termcolor.colored(content,"magenta",attrs=["bold"
 # make image summary from image batch
 def imageSummary(opt,tag,image,H,W):
 	blockSize = opt.visBlockSize
-	imageOne = tf.batch_to_space(image[:blockSize**2],crops=[[0,0],[0,0]],block_size=blockSize)
+	imageOne = tf.batch_to_space(image[:blockSize**2],crops=[[0,0],[0,0]],block_shape=blockSize)
 	imagePermute = tf.reshape(imageOne,[H,blockSize,W,blockSize,-1])
 	imageTransp = tf.transpose(imagePermute,[1,0,3,2,4])
 	imageBlocks = tf.reshape(imageTransp,[1,H*blockSize,W*blockSize,-1])

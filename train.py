@@ -35,7 +35,7 @@ with tf.device("/gpu:0"):
 			  graph.decoder_resnet if opt.arch=="resnet" else None
 	latent = encoder(opt,inputImage)
 	XYZ,maskLogit = decoder(opt,latent) # [B,H,W,3V],[B,H,W,V]
-	mask = tf.compat.v1.to_float(maskLogit>0)
+	mask = tf.cast(maskLogit>0,tf.float32)
 	# ------ build transformer ------
 	fuseTrans = tf.math.l2_normalize(opt.fuseTrans,dim=1)
 	XYZid,ML = transform.fuse3D(opt,XYZ,maskLogit,fuseTrans) # [B,1,VHW]
@@ -49,7 +49,7 @@ with tf.device("/gpu:0"):
 	optim = tf.compat.v1.train.AdamOptimizer(learning_rate=lr_PH).minimize(loss)
 	# ------ generate summaries ------
 	summaryImage = [util.imageSummary(opt,"image_RGB",inputImage,opt.inH,opt.inW),
-					util.imageSummary(opt,"image_depth/pred",((1-newDepth)*tf.compat.v1.to_float(tf.equal(collision,1)))[:,0,:,:,0:1],opt.H,opt.W),
+					util.imageSummary(opt,"image_depth/pred",((1-newDepth)*tf.cast(tf.equal(collision,1),tf.float32))[:,0,:,:,0:1],opt.H,opt.W),
 					util.imageSummary(opt,"image_depth/GT",(1-depthGT)[:,0,:,:,0:1],opt.H,opt.W),
 					util.imageSummary(opt,"image_mask/new",tf.math.sigmoid(newMaskLogit[:,0,:,:,0:1]),opt.H,opt.W),
 					util.imageSummary(opt,"image_mask",tf.math.sigmoid(maskLogit[:,:,:,0:1]),opt.outH,opt.outW),

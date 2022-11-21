@@ -149,7 +149,7 @@ def decoder_resnet(opt,latent):
 # auxiliary function for creating weight and bias
 def createVariable(opt,weightShape,biasShape=None,stddev=None,gridInit=False):
 	if biasShape is None: biasShape = [weightShape[-1]]
-	weight = tf.Variable(tf.random_normal(weightShape,stddev=opt.std),dtype=np.float32,name="weight")
+	weight = tf.Variable(tf.random.normal(weightShape,stddev=opt.std),dtype=np.float32,name="weight")
 	if gridInit:
 		X,Y = np.meshgrid(range(opt.outW),range(opt.outH),indexing="xy") # [H,W]
 		X,Y = X.astype(np.float32),Y.astype(np.float32)

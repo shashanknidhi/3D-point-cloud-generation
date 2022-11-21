@@ -23,6 +23,8 @@ tf.compat.v1.reset_default_graph()
 # build graph
 with tf.device("/gpu:0"):
 	# ------ define input data ------
+	#disable eager execution
+	tf.compat.v1.disable_eager_execution()
 	inputImage = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.inH,opt.inW,3])
 	depthGT = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.outH,opt.outW,opt.outViewN])
 	maskGT = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.outH,opt.outW,opt.outViewN])
@@ -35,7 +37,7 @@ with tf.device("/gpu:0"):
 	latent = encoder(opt,inputImage)
 	XYZ,maskLogit = decoder(opt,latent) # [B,H,W,3V],[B,H,W,V]
 	depth = XYZ[:,:,:,opt.outViewN*2:opt.outViewN*3]
-	mask = tf.compat.v1.to_float(maskLogit>0)
+	mask = tf.cast(maskLogit>0,tf.float32)
 	# ------ define loss ------
 	XGT,YGT = np.meshgrid(range(opt.outW),range(opt.outH),indexing="xy") # [H,W]
 	XGT,YGT = XGT.astype(np.float32),YGT.astype(np.float32)
