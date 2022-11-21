@@ -16,8 +16,8 @@ print(util.toMagenta("setting configurations..."))
 opt = options.set(training=False)
 
 with tf.device("/gpu:0"):
-	VsPH = tf.placeholder(tf.float64,[None,3])
-	VtPH = tf.placeholder(tf.float64,[None,3])
+	VsPH = tf.compat.v1.placeholder(tf.float64,[None,3])
+	VtPH = tf.compat.v1.placeholder(tf.float64,[None,3])
 	_,minDist = util.projection(VsPH,VtPH)
 
 # compute test error for one prediction
@@ -50,9 +50,9 @@ CADN = len(dataloader.CADs)
 print(util.toYellow("======= EVALUATION START ======="))
 timeStart = time.time()
 # start session
-tfConfig = tf.ConfigProto(allow_soft_placement=True)
+tfConfig = tf.compat.v1.ConfigProto(allow_soft_placement=True)
 tfConfig.gpu_options.allow_growth = True
-with tf.Session(config=tfConfig) as sess:
+with tf.compat.v1.Session(config=tfConfig) as sess:
 	pred2GT_all = np.ones([CADN,opt.inputViewN])*np.inf
 	GT2pred_all = np.ones([CADN,opt.inputViewN])*np.inf
 

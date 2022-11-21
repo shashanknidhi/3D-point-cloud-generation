@@ -21,14 +21,14 @@ opt.chunkSize = 50
 util.mkdir("results_{0}/{1}".format(opt.group,opt.load))
 
 print(util.toMagenta("building graph..."))
-tf.reset_default_graph()
+tf.compat.v1.reset_default_graph()
 # build graph
 with tf.device("/gpu:0"):
 	# ------ define input data ------
-	inputImage = tf.placeholder(tf.float32,shape=[opt.batchSize,opt.inH,opt.inW,3])
-	renderTrans = tf.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,4])
-	depthGT = tf.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,opt.H,opt.W,1])
-	maskGT = tf.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,opt.H,opt.W,1])
+	inputImage = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.inH,opt.inW,3])
+	renderTrans = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,4])
+	depthGT = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,opt.H,opt.W,1])
+	maskGT = tf.compat.v1.placeholder(tf.float32,shape=[opt.batchSize,opt.novelN,opt.H,opt.W,1])
 	PH = [inputImage,renderTrans,depthGT,maskGT]
 	# ------ build encoder-decoder ------
 	encoder = graph.encoder if opt.arch=="original" else \
@@ -37,9 +37,9 @@ with tf.device("/gpu:0"):
 			  graph.decoder_resnet if opt.arch=="resnet" else None
 	latent = encoder(opt,inputImage)
 	XYZ,maskLogit = decoder(opt,latent) # [B,H,W,3V],[B,H,W,V]
-	mask = tf.to_float(maskLogit>0)
+	mask = tf.compat.v1.to_float(maskLogit>0)
 	# ------ build transformer ------
-	fuseTrans = tf.nn.l2_normalize(opt.fuseTrans,dim=1)
+	fuseTrans = tf.math.l2_normalize(opt.fuseTrans,dim=1)
 	XYZid,ML = transform.fuse3D(opt,XYZ,maskLogit,fuseTrans) # [B,1,VHW]
 
 # load data
@@ -50,14 +50,14 @@ chunkN = int(np.ceil(CADN/opt.chunkSize))
 dataloader.loadChunk(opt,loadRange=[0,opt.chunkSize])
 
 # prepare model saver/summary writer
-saver = tf.train.Saver()
+saver = tf.compat.v1.train.Saver()
 
 print(util.toYellow("======= EVALUATION START ======="))
 timeStart = time.time()
 # start session
-tfConfig = tf.ConfigProto(allow_soft_placement=True)
+tfConfig = tf.compat.v1.ConfigProto(allow_soft_placement=True)
 tfConfig.gpu_options.allow_growth = True
-with tf.Session(config=tfConfig) as sess:
+with tf.compat.v1.Session(config=tfConfig) as sess:
 	util.restoreModel(opt,sess,saver)
 	print(util.toMagenta("loading pretrained ({0})...".format(opt.load)))
 

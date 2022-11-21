@@ -15,14 +15,14 @@ def fuse3D(opt,XYZ,maskLogit,fuseTrans): # [B,H,W,3V],[B,H,W,V]
 		t_view = np.tile([0,0,-opt.renderDepth],[opt.outViewN,1]).astype(np.float32)
 		RtHom_view = transParamsToHomMatrix(q_view,t_view)
 		RtHomTile_view = tf.tile(tf.expand_dims(RtHom_view,0),[opt.batchSize,1,1,1])
-		invRtHomTile_view = tf.matrix_inverse(RtHomTile_view)
+		invRtHomTile_view = tf.linalg.inv(RtHomTile_view)
 		# effective transformation
-		RtHomTile = tf.matmul(invRtHomTile_view,invKhomTile) # [B,V,4,4]
+		RtHomTile = tf.linalg.matmul(invRtHomTile_view,invKhomTile) # [B,V,4,4]
 		RtTile = RtHomTile[:,:,:3,:] # [B,V,3,4]
 		# transform depth stack
 		ML = tf.reshape(maskLogit,[opt.batchSize,1,-1]) # [B,1,VHW]
 		XYZhom = get3DhomCoord(XYZ,opt) # [B,V,4,HW]
-		XYZid = tf.matmul(RtTile,XYZhom) # [B,V,3,HW]
+		XYZid = tf.linalg.matmul(RtTile,XYZhom) # [B,V,3,HW]
 		# fuse point clouds
 		XYZid = tf.reshape(tf.transpose(XYZid,perm=[0,2,1,3]),[opt.batchSize,3,-1]) # [B,3,VHW]
 	return XYZid,ML # [B,1,VHW]
@@ -39,12 +39,12 @@ def render2D(opt,XYZid,ML,renderTrans): # [B,1,VHW]
 		KupHom = opt.Khom3Dto2D*np.array([[opt.upscale],[opt.upscale],[1],[1]],dtype=np.float32)
 		KupHomTile = np.tile(KupHom,[opt.batchSize,opt.novelN,1,1])
 		# effective transformation
-		RtHomTile = tf.matmul(KupHomTile,RtHom_target) # [B,N,4,4]
+		RtHomTile = tf.linalg.matmul(KupHomTile,RtHom_target) # [B,N,4,4]
 		RtTile = RtHomTile[:,:,:3,:] # [B,N,3,4]
 		# transform depth stack
 		XYZidHom = get3DhomCoord2(XYZid,opt) # [B,4,VHW]
 		XYZidHomTile = tf.tile(tf.expand_dims(XYZidHom,axis=1),[1,opt.novelN,1,1]) # [B,N,4,VHW]
-		XYZnew = tf.matmul(RtTile,XYZidHomTile) # [B,N,3,VHW]
+		XYZnew = tf.linalg.matmul(RtTile,XYZidHomTile) # [B,N,3,VHW]
 		Xnew,Ynew,Znew = tf.split(XYZnew,3,axis=2) # [B,N,1,VHW]
 		# concatenate all viewpoints
 		MLcat = tf.reshape(tf.tile(ML,[1,opt.novelN,1]),[-1]) # [BNVHW]
@@ -54,8 +54,8 @@ def render2D(opt,XYZid,ML,renderTrans): # [B,1,VHW]
 		batchIdxCat,novelIdxCat,_ = np.meshgrid(range(opt.batchSize),range(opt.novelN),range(opt.outViewN*opt.outH*opt.outW),indexing="ij")
 		batchIdxCat,novelIdxCat = batchIdxCat.reshape([-1]),novelIdxCat.reshape([-1]) # [BNVHW]
 		# apply in-range masks
-		XnewCatInt = tf.to_int32(tf.round(XnewCat))
-		YnewCatInt = tf.to_int32(tf.round(YnewCat))
+		XnewCatInt = tf.compat.v1.to_int32(tf.round(XnewCat))
+		YnewCatInt = tf.compat.v1.to_int32(tf.round(YnewCat))
 		maskInside = (XnewCatInt>=0)&(XnewCatInt<opt.upscale*opt.W)&(YnewCatInt>=0)&(YnewCatInt<opt.upscale*opt.H)
 		valueInt = tf.stack([XnewCatInt,YnewCatInt,batchIdxCat,novelIdxCat],axis=1) # [BNVHW,d]
 		valueFloat = tf.stack([1/(ZnewCat+offsetDepth+1e-8),MLcat],axis=1) # [BNVHW,d]
