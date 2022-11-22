@@ -65,6 +65,8 @@ with tf.device("/gpu:0"):
 	summaryLoss = [tf.summary.scalar("loss_total",loss),
 				   tf.summary.scalar("loss_mask",loss_mask),
 				   tf.summary.scalar("loss_XYZ",loss_XYZ)]
+	for i in range(len(summaryLoss)):
+		summaryLoss[i] = tf.strings.as_string(summaryLoss[i])
 	summaryLoss = tf.compat.v1.summary.merge(summaryLoss)
 
 # load data
