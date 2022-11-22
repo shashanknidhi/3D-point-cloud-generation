@@ -59,10 +59,8 @@ with tf.device("/gpu:0"):
 					util.imageSummary(opt,"image_depth/GT",(1-depthGT)[:,:,:,0:1],opt.outH,opt.outW),
 					util.imageSummary(opt,"image_mask",tf.math.sigmoid(maskLogit[:,:,:,0:1]),opt.outH,opt.outW),
 					util.imageSummary(opt,"image_mask/GT",maskGT[:,:,:,0:1],opt.outH,opt.outW)]
-	print(summaryImage)
-	print(type(summaryImage))
-	for i in summaryImage:
-		print(type(i))
+	for i in range(len(summaryImage)):
+		summaryImage[i] = tf.strings.as_string(summaryImage[i])
 	summaryImage = tf.compat.v1.summary.merge(summaryImage)
 	summaryLoss = [tf.summary.scalar("loss_total",loss),
 				   tf.summary.scalar("loss_mask",loss_mask),
